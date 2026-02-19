@@ -6,6 +6,7 @@
       "description": "同时发射三支箭，两侧箭偏转15度",
       "icon": "triple_shot_icon",
       "maxLevel": 3,
+      "isUnique": true,
       "effects": [
         {
           "type": "add_projectile",
@@ -50,6 +51,7 @@
       "description": "箭矢可以穿透1个敌人",
       "icon": "piercing_icon",
       "maxLevel": 3,
+      "isUnique": true,
       "effects": [
         {
           "type": "add_pierce",
@@ -83,6 +85,36 @@
           "type": "modify_stat",
           "stat": "maxHealth",
           "value": 20,
+          "operation": "add"
+        }
+      ]
+    },
+    {
+      "id": "life_steal",
+      "name": "生命恢复",
+      "description": "立即回复生命上限的33%",
+      "icon": "life_steal_icon",
+      "maxLevel": 1,
+      "isUnique": true,
+      "effects": [
+        {
+          "type": "heal",
+          "value": 0.33
+        }
+      ]
+    },
+    {
+      "id": "exp_boost",
+      "name": "倍有经验",
+      "description": "获得的经验翻倍",
+      "icon": "exp_boost_icon",
+      "maxLevel": 1,
+      "isUnique": true,
+      "effects": [
+        {
+          "type": "modify_stat",
+          "stat": "experienceMultiplier",
+          "value": 1.0,
           "operation": "add"
         }
       ]

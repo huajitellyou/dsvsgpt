@@ -89,27 +89,35 @@
     }
 
     .ui-health-bar-bg {
-      width: clamp(120px, 20vw, 200px);
-      height: clamp(16px, 2.5vh, 24px);
-      background: rgba(51, 51, 51, 0.6);
-      border-radius: 4px;
+      width: clamp(140px, 22vw, 220px);
+      height: clamp(22px, 3vh, 30px);
+      background: rgba(51, 51, 51, 0.7);
+      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      position: relative;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 255, 255, 0.2);
     }
 
     .ui-health-bar-fill {
       width: 100%;
       height: 100%;
       background: linear-gradient(to right, #00cc44, #00ff66);
-      border-radius: 4px;
+      border-radius: 10px;
       transition: width 0.2s ease-out, background 0.3s ease;
     }
 
     .ui-health-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       color: #ffffff;
-      font-size: clamp(10px, 1.8vw, 14px);
+      font-size: clamp(12px, 2vw, 16px);
       font-weight: bold;
       text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+      white-space: nowrap;
+      z-index: 2;
     }
 
     /* 信息面板 - 右上角 */
@@ -149,6 +157,47 @@
 
     .ui-attack {
       color: #ff9999;
+    }
+
+    /* ===== 经验条样式 - 进度条形式 ===== */
+    .ui-exp-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .ui-exp-bar-bg {
+      width: clamp(120px, 20vw, 200px);
+      height: clamp(18px, 2.8vh, 26px);
+      background: rgba(51, 51, 51, 0.7);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 215, 0, 0.3);
+    }
+
+    .ui-exp-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(to right, #ffd700, #ffed4e);
+      border-radius: 10px;
+      transition: width 0.3s ease-out;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    }
+
+    .ui-exp-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #000;
+      font-size: clamp(11px, 1.8vw, 14px);
+      font-weight: bold;
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+      white-space: nowrap;
+      z-index: 2;
     }
 
     /* 操作说明 - 底部中央 */
@@ -878,7 +927,7 @@
       display: flex;
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-eUJye91y.js"></script>
+  <script type="module" crossorigin src="./assets/index-BwO1vjLy.js"></script>
 </head>
 
 <body>
