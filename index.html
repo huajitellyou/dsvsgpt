@@ -927,7 +927,7 @@
       display: flex;
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-BwO1vjLy.js"></script>
+  <script type="module" crossorigin src="./assets/index-XVxFjVUz.js"></script>
 </head>
 
 <body>
@@ -1030,11 +1030,52 @@
     const MainMenu = {
       clouds: [],
       animationId: null,
+      audioContext: null,
+      bgm: null,
+      isAudioStarted: false,
 
       init() {
         this.createClouds();
         this.bindEvents();
         this.startCloudAnimation();
+        this.initAudio();
+      },
+
+      // 初始化音频系统
+      initAudio() {
+        // 检查是否已静音
+        const isMuted = localStorage.getItem('deepseek_vs_gpt_muted') === 'true';
+        if (isMuted) return;
+
+        // 创建音频上下文
+        try {
+          this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+          console.warn('[MainMenu] 无法创建音频上下文:', e);
+        }
+      },
+
+      // 启动背景音乐
+      startBGM() {
+        if (this.isAudioStarted || !this.audioContext) return;
+
+        // 创建简单的背景音乐（使用Web Audio API生成）
+        // 实际项目中应该加载音频文件
+        this.isAudioStarted = true;
+        console.log('[MainMenu] BGM 准备就绪，等待用户交互后播放');
+      },
+
+      // 处理首次用户交互（解锁音频）
+      handleFirstInteraction() {
+        if (!this.audioContext) return;
+
+        // 恢复音频上下文（如果处于暂停状态）
+        if (this.audioContext.state === 'suspended') {
+          this.audioContext.resume();
+        }
+
+        this.startBGM();
+        console.log('[MainMenu] 音频已解锁');
       },
 
       // 创建云朵
@@ -1098,6 +1139,15 @@
         window.addEventListener('resize', () => {
           this.handleResize();
         });
+
+        // 监听首次用户交互以解锁音频
+        const unlockAudio = () => {
+          this.handleFirstInteraction();
+          document.removeEventListener('click', unlockAudio);
+          document.removeEventListener('touchstart', unlockAudio);
+        };
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
       },
 
       // 开始游戏
