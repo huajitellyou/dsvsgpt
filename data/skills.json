@@ -1,0 +1,91 @@
+{
+  "skills": [
+    {
+      "id": "triple_shot",
+      "name": "三连射",
+      "description": "同时发射三支箭，两侧箭偏转15度",
+      "icon": "triple_shot_icon",
+      "maxLevel": 3,
+      "effects": [
+        {
+          "type": "add_projectile",
+          "count": 2,
+          "angleOffset": 15
+        }
+      ]
+    },
+    {
+      "id": "rapid_fire",
+      "name": "快速射击",
+      "description": "攻击速度提升20%",
+      "icon": "rapid_fire_icon",
+      "maxLevel": 5,
+      "effects": [
+        {
+          "type": "modify_stat",
+          "stat": "fireRate",
+          "value": -0.2,
+          "operation": "multiply"
+        }
+      ]
+    },
+    {
+      "id": "power_shot",
+      "name": "强力射击",
+      "description": "箭矢伤害提升25%",
+      "icon": "power_shot_icon",
+      "maxLevel": 5,
+      "effects": [
+        {
+          "type": "modify_stat",
+          "stat": "damage",
+          "value": 0.25,
+          "operation": "multiply"
+        }
+      ]
+    },
+    {
+      "id": "piercing",
+      "name": "穿透",
+      "description": "箭矢可以穿透1个敌人",
+      "icon": "piercing_icon",
+      "maxLevel": 3,
+      "effects": [
+        {
+          "type": "add_pierce",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "speed_boost",
+      "name": "疾风步",
+      "description": "移动速度提升15%",
+      "icon": "speed_boost_icon",
+      "maxLevel": 5,
+      "effects": [
+        {
+          "type": "modify_stat",
+          "stat": "speed",
+          "value": 0.15,
+          "operation": "multiply"
+        }
+      ]
+    },
+    {
+      "id": "health_up",
+      "name": "生命强化",
+      "description": "最大生命值提升20",
+      "icon": "health_up_icon",
+      "maxLevel": 10,
+      "effects": [
+        {
+          "type": "modify_stat",
+          "stat": "maxHealth",
+          "value": 20,
+          "operation": "add"
+        }
+      ]
+    }
+  ]
+}
