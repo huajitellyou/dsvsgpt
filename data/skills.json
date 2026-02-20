@@ -118,6 +118,38 @@
           "operation": "add"
         }
       ]
+    },
+    {
+      "id": "rage_explosion",
+      "name": "我气炸了",
+      "description": "受到伤害后产生爆炸，对周围敌人造成100伤害。积攒9秒后变红，爆炸后重新积攒。",
+      "icon": "rage_explosion_icon",
+      "maxLevel": 1,
+      "isUnique": true,
+      "effects": [
+        {
+          "type": "rage_explosion",
+          "explosionDamage": 100,
+          "explosionRadius": 600,
+          "chargeTime": 9000
+        }
+      ]
+    },
+    {
+      "id": "roll_damage_boost",
+      "name": "创4你",
+      "description": "翻滚伤害增加20点",
+      "icon": "roll_damage_boost_icon",
+      "maxLevel": 99,
+      "isUnique": false,
+      "effects": [
+        {
+          "type": "modify_stat",
+          "stat": "rollDamage",
+          "value": 20,
+          "operation": "add"
+        }
+      ]
     }
   ]
 }
