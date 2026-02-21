@@ -10,6 +10,15 @@ alwaysApply: true
 
 ---
 
+## 更新记录
+
+| 日期 | 版本 | 更新内容 |
+|------|------|----------|
+| 2026-02-21 | v1.1 | 新增资源管理规范（字体、图片、音频、数据文件） |
+| 2026-02-21 | v1.0 | 初始版本，包含完整的开发规范和架构指南 |
+
+---
+
 ## 1. 项目概述
 
 本项目是一个基于 Phaser 4 的 2D 动作生存游戏，采用组件化架构和模块化设计。本文档定义了完整的开发规范，确保代码一致性、可维护性和可扩展性。
@@ -145,6 +154,24 @@ src/
 │   ├── LoadingScene.js
 │   └── GameScene.js
 └── main.js           # 入口文件
+
+assets/
+├── audio/            # 音频资源
+│   ├── bgm.mp3
+│   ├── menu_bgm.mp3
+│   ├── explosion.wav
+│   ├── exp_pickup.wav
+│   └── level_up.wav
+├── data/             # 数据文件
+│   └── skills.json
+├── fonts/            # 字体资源
+│   ├── font.ttf      # 主字体文件（必须）
+│   ├── fonts.css     # 字体样式配置
+│   └── README.md     # 字体使用说明
+└── images/           # 图片资源
+    ├── characters/   # 角色图片
+    ├── environment/  # 环境图片
+    └── items/        # 物品图片
 ```
 
 ### 3.2 文件添加规范
@@ -160,6 +187,9 @@ src/
 | 新工具类 | `src/utils/` | - | - |
 | 新配置 | `src/config/` | - | - |
 | 技能数据 | `assets/data/skills.json` | - | 同步更新 `SkillSystem.iconMap` |
+| 字体文件 | `assets/fonts/` | - | 替换 `font.ttf`，自动生效 |
+| 图片资源 | `assets/images/` | - | 按类别放入子目录 |
+| 音频资源 | `assets/audio/` | - | 支持 mp3、wav 格式 |
 
 ---
 
@@ -703,11 +733,98 @@ try {
 
 ---
 
-## 12. 参考资源
+## 12. 资源管理规范
+
+### 12.1 字体资源
+
+字体文件存放在 `assets/fonts/` 目录：
+
+```
+assets/fonts/
+├── font.ttf      # 主字体文件（必须命名为 font.ttf）
+├── fonts.css     # 字体样式配置
+└── README.md     # 字体使用说明
+```
+
+**更换字体步骤**：
+1. 将新字体文件重命名为 `font.ttf`
+2. 替换 `assets/fonts/font.ttf`
+3. 无需修改代码，自动生效
+
+**字体使用规范**：
+```css
+/* 在 CSS 中使用 CSS 变量 */
+.my-element {
+  font-family: var(--font-primary);
+}
+
+.my-title {
+  font-family: var(--font-title);
+}
+```
+
+**支持的字体格式**：
+- `.ttf` - TrueType 字体（推荐）
+- `.woff` / `.woff2` - Web 字体（需修改 fonts.css）
+
+**字体文件要求**：
+- 文件大小建议控制在 5MB 以下
+- 确保字体有合法授权
+- 中文字体建议使用子集化工具减小体积
+
+### 12.2 图片资源
+
+图片资源按类别存放在 `assets/images/` 子目录：
+
+```
+assets/images/
+├── characters/   # 角色图片（玩家、敌人）
+├── environment/  # 环境图片（背景、地面、云朵）
+└── items/        # 物品图片（箭矢、经验球）
+```
+
+**图片加载**：
+```javascript
+// 在 LoadingScene 中预加载
+preload() {
+  this.load.image('key', 'assets/images/category/image.png');
+}
+```
+
+### 12.3 音频资源
+
+音频资源存放在 `assets/audio/` 目录：
+
+```
+assets/audio/
+├── bgm.mp3       # 游戏背景音乐
+├── menu_bgm.mp3  # 菜单背景音乐
+├── explosion.wav # 爆炸音效
+├── exp_pickup.wav# 经验拾取音效
+└── level_up.wav  # 升级音效
+```
+
+**支持的音频格式**：
+- `.mp3` - 背景音乐（推荐）
+- `.wav` - 音效（推荐）
+
+### 12.4 数据文件
+
+游戏数据存放在 `assets/data/` 目录：
+
+```
+assets/data/
+└── skills.json   # 技能配置数据
+```
+
+---
+
+## 13. 参考资源
 
 - **Phaser 4 文档**: https://docs.phaser.io/api-documentation/4.0.0-rc.6/api-documentation
 - **项目架构文档**: `.trae/documents/项目架构重构方案.md`
 - **技能数据**: `assets/data/skills.json`
+- **字体说明**: `assets/fonts/README.md`
 
 ---
 
@@ -734,3 +851,11 @@ try {
 2. 继承 `Phaser.Scene`
 3. 在 `main.js` 中注册场景
 4. 实现 `preload`, `create`, `update`, `shutdown`
+
+### D. 更换游戏字体的步骤
+
+1. 准备字体文件（.ttf 格式）
+2. 将字体文件重命名为 `font.ttf`
+3. 替换 `assets/fonts/font.ttf`
+4. 刷新页面即可生效
+5. 如需调整字体样式，修改 `assets/fonts/fonts.css`
