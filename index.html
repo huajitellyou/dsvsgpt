@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Deepseek VS GPT</title>
+  <style>
+    /* 重置样式 */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* 根元素和body全屏设置 */
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    /* 游戏容器 - 全屏填充 */
+    #game-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      width: 100dvw;
+      /* 动态视口宽度 */
+      height: 100dvh;
+      /* 动态视口高度 */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      overflow: hidden;
+    }
+
+    /* Phaser Canvas 样式优化 */
+    #game-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      /* 图像渲染优化 - 抗锯齿 */
+      image-rendering: auto;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+
+    /* ========== 游戏UI样式 - 透明简洁风格 ========== */
+    #game-ui-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      /* 允许点击穿透到游戏 */
+      z-index: 1000;
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+    }
+
+    /* 血条容器 - 左上角 */
+    .ui-health-container {
+      position: absolute;
+      top: clamp(10px, 2vh, 20px);
+      left: clamp(10px, 2vw, 20px);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .ui-health-label {
+      color: #ff6b6b;
+      font-size: clamp(12px, 2vw, 16px);
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .ui-health-bar-bg {
+      width: clamp(140px, 22vw, 220px);
+      height: clamp(22px, 3vh, 30px);
+      background: rgba(51, 51, 51, 0.7);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .ui-health-bar-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, #00cc44, #00ff66);
+      border-radius: 10px;
+      transition: width 0.2s ease-out, background 0.3s ease;
+    }
+
+    .ui-health-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ffffff;
+      font-size: clamp(12px, 2vw, 16px);
+      font-weight: bold;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+      white-space: nowrap;
+      z-index: 2;
+    }
+
+    /* 信息面板 - 右上角 */
+    .ui-info-panel {
+      position: absolute;
+      top: clamp(10px, 2vh, 20px);
+      right: clamp(10px, 2vw, 20px);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: clamp(4px, 1vh, 8px);
+    }
+
+    .ui-info-item {
+      color: #ffffff;
+      font-size: clamp(12px, 2vw, 18px);
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      white-space: nowrap;
+    }
+
+    .ui-info-item .ui-label {
+      opacity: 0.9;
+    }
+
+    .ui-score {
+      color: #ffffff;
+    }
+
+    .ui-level {
+      color: #00ff88;
+    }
+
+    .ui-exp {
+      color: #ffff00;
+    }
+
+    .ui-attack {
+      color: #ff9999;
+    }
+
+    /* ===== 经验条样式 - 进度条形式 ===== */
+    .ui-exp-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .ui-exp-bar-bg {
+      width: clamp(120px, 20vw, 200px);
+      height: clamp(18px, 2.8vh, 26px);
+      background: rgba(51, 51, 51, 0.7);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 215, 0, 0.3);
+    }
+
+    .ui-exp-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(to right, #ffd700, #ffed4e);
+      border-radius: 10px;
+      transition: width 0.3s ease-out;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    }
+
+    .ui-exp-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #000;
+      font-size: clamp(11px, 1.8vw, 14px);
+      font-weight: bold;
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+      white-space: nowrap;
+      z-index: 2;
+    }
+
+    /* 操作说明 - 底部中央 */
+    .ui-instructions {
+      position: absolute;
+      bottom: clamp(10px, 2vh, 20px);
+      left: 50%;
+      transform: translateX(-50%);
+      color: #ffffff;
+      font-size: clamp(11px, 1.8vw, 16px);
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+      white-space: nowrap;
+      padding: clamp(6px, 1vh, 10px) clamp(12px, 2vw, 20px);
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 20px;
+      backdrop-filter: blur(2px);
+    }
+
+    /* ========== 技能选择UI样式 ========== */
+    #skill-selection-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      pointer-events: auto;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #skill-selection-overlay.visible {
+      display: flex;
+      opacity: 1;
+    }
+
+    .skill-selection-title {
+      color: #ffffff;
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: bold;
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+      margin-bottom: clamp(30px, 5vh, 60px);
+      text-align: center;
+      animation: fadeInDown 0.4s ease-out;
+    }
+
+    .skill-cards-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      gap: clamp(16px, 3vw, 40px);
+      padding: 0 clamp(10px, 2vw, 40px);
+      flex-wrap: wrap;
+    }
+
+    /* 技能卡片样式 */
+    .skill-card {
+      width: clamp(180px, 22vw, 240px);
+      height: clamp(260px, 38vh, 320px);
+      background: rgba(42, 42, 42, 0.95);
+      border: 3px solid #666666;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: clamp(16px, 2vh, 24px);
+      cursor: pointer;
+      transform: scale(0);
+      animation: cardEnter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      pointer-events: auto;
+    }
+
+    /* stagger延迟 - 每张卡片延迟100ms */
+    .skill-card:nth-child(1) {
+      animation-delay: 0ms;
+    }
+
+    .skill-card:nth-child(2) {
+      animation-delay: 100ms;
+    }
+
+    .skill-card:nth-child(3) {
+      animation-delay: 200ms;
+    }
+
+    /* hover效果 - 放大1.05倍 */
+    .skill-card:hover {
+      transform: scale(1.05);
+      background: rgba(58, 58, 58, 0.98);
+      border-color: #888888;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .skill-card:hover .skill-icon-bg {
+      background: #555555;
+    }
+
+    /* 图标区域 */
+    .skill-icon-bg {
+      width: clamp(60px, 8vw, 80px);
+      height: clamp(60px, 8vw, 80px);
+      background: #444444;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: clamp(12px, 2vh, 20px);
+      transition: background 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .skill-icon {
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1;
+    }
+
+    /* 技能名称 */
+    .skill-name {
+      color: #ffff00;
+      font-size: clamp(18px, 2.2vw, 24px);
+      font-weight: bold;
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      text-align: center;
+      margin-bottom: clamp(8px, 1.5vh, 16px);
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    }
+
+    /* 技能描述 */
+    .skill-description {
+      color: #cccccc;
+      font-size: clamp(13px, 1.5vw, 16px);
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      text-align: center;
+      line-height: 1.5;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+    }
+
+    /* 点击提示 */
+    .skill-select-hint {
+      color: #00ff00;
+      font-size: clamp(14px, 1.6vw, 18px);
+      font-weight: bold;
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      text-align: center;
+      margin-top: clamp(8px, 1.5vh, 16px);
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    }
+
+    /* 入场动画关键帧 */
+    @keyframes cardEnter {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeInDown {
+      0% {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* ========== 游戏结束UI样式 ========== */
+    #game-over-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      pointer-events: auto;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #game-over-overlay.visible {
+      display: flex;
+      opacity: 1;
+    }
+
+    .game-over-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(20px, 4vh, 40px);
+      padding: clamp(20px, 4vw, 40px);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .game-over-title {
+      color: #ff3333;
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: bold;
+      font-family: 'Arial Black', 'Arial', 'Microsoft YaHei', sans-serif;
+      text-shadow:
+        0 0 10px rgba(255, 51, 51, 0.5),
+        0 0 20px rgba(255, 51, 51, 0.3),
+        4px 4px 8px rgba(0, 0, 0, 0.8);
+      animation: fadeInDown 0.4s ease-out;
+    }
+
+    .game-over-stats {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 2vh, 20px);
+      align-items: center;
+      animation: fadeInUp 0.4s ease-out 0.2s both;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stat-label {
+      color: #aaaaaa;
+      font-size: clamp(14px, 2vw, 20px);
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    }
+
+    .stat-value {
+      font-size: clamp(24px, 3.5vw, 40px);
+      font-weight: bold;
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      text-shadow:
+        0 0 10px rgba(0, 0, 0, 0.5),
+        2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .stat-value.score {
+      color: #ffd700;
+    }
+
+    .stat-value.level {
+      color: #00ced1;
+    }
+
+    .game-over-button {
+      margin-top: clamp(10px, 2vh, 20px);
+      padding: clamp(12px, 2vh, 18px) clamp(30px, 5vw, 50px);
+      background: linear-gradient(135deg, #4a90d9, #357abd);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow:
+        0 4px 15px rgba(74, 144, 217, 0.4),
+        0 0 0 2px rgba(255, 255, 255, 0.1);
+      animation: fadeInUp 0.4s ease-out 0.4s both;
+      pointer-events: auto;
+    }
+
+    .game-over-button:hover {
+      transform: scale(1.05);
+      box-shadow:
+        0 6px 20px rgba(74, 144, 217, 0.6),
+        0 0 0 2px rgba(255, 255, 255, 0.2);
+      background: linear-gradient(135deg, #5ba0e9, #4a90d9);
+    }
+
+    .game-over-button:active {
+      transform: scale(0.98);
+    }
+
+    .button-text {
+      color: #ffffff;
+      font-size: clamp(16px, 2.5vw, 24px);
+      font-weight: bold;
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    }
+
+    /* 入场动画关键帧 */
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeInDown {
+      0% {
+        transform: translateY(-30px);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeInUp {
+      0% {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* ========== 移动端横屏提示样式 ========== */
+    #rotate-hint {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      pointer-events: auto;
+    }
+
+    #rotate-hint.visible {
+      display: flex;
+    }
+
+    .rotate-icon-container {
+      width: 120px;
+      height: 200px;
+      position: relative;
+      margin-bottom: 30px;
+    }
+
+    .rotate-phone {
+      width: 80px;
+      height: 140px;
+      border: 4px solid #ffffff;
+      border-radius: 12px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: rotatePhone 2s ease-in-out infinite;
+    }
+
+    .rotate-phone::before {
+      content: '';
+      width: 60px;
+      height: 100px;
+      background: rgba(255, 255, 255, 0.1);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 4px;
+    }
+
+    .rotate-phone::after {
+      content: '';
+      width: 20px;
+      height: 4px;
+      background: #ffffff;
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 2px;
+    }
+
+    .rotate-arrow {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+    }
+
+    .rotate-arrow::before {
+      content: '↻';
+      font-size: 36px;
+      color: #00ff88;
+      animation: arrowPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes rotatePhone {
+
+      0%,
+      100% {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+
+      50% {
+        transform: translate(-50%, -50%) rotate(90deg);
+      }
+    }
+
+    @keyframes arrowPulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.6;
+        transform: scale(0.9);
+      }
+    }
+
+    .rotate-text {
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: bold;
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      margin-bottom: 12px;
+    }
+
+    .rotate-subtext {
+      color: #aaaaaa;
+      font-size: 16px;
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    /* 移动端横屏时的游戏容器调整 */
+    @media screen and (max-width: 1024px) and (orientation: landscape) {
+      #game-container {
+        width: 100vw;
+        height: 100vh;
+        width: 100dvw;
+        height: 100dvh;
+      }
+    }
+
+    /* ========== 全屏模式样式 ========== */
+    /* 全屏模式下的背景色 */
+    :fullscreen {
+      background: #000;
+    }
+
+    :-webkit-full-screen {
+      background: #000;
+    }
+
+    :-ms-fullscreen {
+      background: #000;
+    }
+
+    /* iOS 独立模式样式 */
+    .ios-standalone {
+      /* 确保内容延伸到安全区域 */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    /* ========== 移动端虚拟摇杆和按钮样式 ========== */
+    #mobile-controls-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1500;
+    }
+
+    .virtual-joystick {
+      touch-action: none;
+      pointer-events: auto;
+    }
+
+    .joystick-knob {
+      will-change: transform;
+    }
+
+    .touch-button {
+      touch-action: none;
+      pointer-events: auto;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 移动端竖屏时隐藏控件 */
+    @media screen and (orientation: portrait) {
+      #mobile-controls-container {
+        display: none;
+      }
+    }
+
+    /* 移动端横屏时显示控件 */
+    @media screen and (orientation: landscape) and (max-width: 1024px) {
+      #mobile-controls-container {
+        display: block;
+      }
+    }
+
+    /* 隐藏滚动条 */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* 防止双击缩放 */
+    * {
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* 游戏容器在全屏下的额外优化 */
+    #game-container:fullscreen,
+    #game-container:-webkit-full-screen {
+      width: 100vw !important;
+      height: 100vh !important;
+      width: 100dvw !important;
+      height: 100dvh !important;
+    }
+
+    /* iOS Safari 最小化工具栏 */
+    @supports (-webkit-touch-callout: none) {
+
+      /* iOS 设备专用样式 */
+      html.ios-standalone {
+        height: 100vh;
+        height: -webkit-fill-available;
+      }
+
+      body.ios-standalone {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+      }
+
+      #game-container.ios-standalone {
+        height: 100vh;
+        height: -webkit-fill-available;
+      }
+    }
+
+    /* ========== 主菜单样式 ========== */
+    #main-menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    #main-menu.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* 天空背景 */
+    .menu-sky {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('./images/environment/sky.png') repeat;
+      background-size: cover;
+      z-index: 1;
+    }
+
+    /* 云朵层 */
+    .menu-clouds {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .cloud {
+      position: absolute;
+      background: url('./images/environment/cloud.png') no-repeat center center;
+      background-size: contain;
+      opacity: 0.85;
+      will-change: transform;
+    }
+
+    /* 云朵水平飘动动画 */
+    @keyframes cloudFloat {
+      0% {
+        transform: translateX(100vw);
+      }
+
+      100% {
+        transform: translateX(-200px);
+      }
+    }
+
+    /* 标题样式 */
+    .menu-title {
+      position: relative;
+      z-index: 3;
+      font-size: clamp(36px, 8vw, 72px);
+      font-weight: bold;
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      color: #ffffff;
+      text-shadow:
+        2px 2px 0 #000,
+        -2px -2px 0 #000,
+        2px -2px 0 #000,
+        -2px 2px 0 #000,
+        4px 4px 8px rgba(0, 0, 0, 0.5);
+      margin-bottom: clamp(40px, 10vh, 80px);
+      animation: titleBreathe 2s ease-in-out infinite;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    @keyframes titleBreathe {
+
+      0%,
+      100% {
+        transform: scale(0.95);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    /* 开始游戏按钮 */
+    .menu-start-btn {
+      position: relative;
+      z-index: 3;
+      padding: clamp(12px, 2vh, 18px) clamp(40px, 5vw, 60px);
+      font-size: clamp(18px, 3vw, 32px);
+      font-weight: bold;
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      color: #ffffff;
+      background: linear-gradient(135deg, rgba(74, 144, 217, 0.9), rgba(53, 122, 189, 0.9));
+      border: 3px solid rgba(255, 255, 255, 0.5);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow:
+        0 6px 20px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .menu-start-btn:hover {
+      transform: scale(1.1);
+      background: linear-gradient(135deg, rgba(91, 160, 233, 0.95), rgba(74, 144, 217, 0.95));
+      border-color: #ffff00;
+      color: #ffff00;
+      box-shadow:
+        0 8px 30px rgba(74, 144, 217, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+
+    .menu-start-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* 地面层 */
+    .menu-ground {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: clamp(100px, 20vh, 200px);
+      background: url('./images/environment/ground.png') repeat-x;
+      background-size: auto 100%;
+      z-index: 2;
+    }
+
+    /* 游戏容器初始隐藏 */
+    #game-container {
+      display: none;
+    }
+
+    #game-container.game-active {
+      display: flex;
+    }
+
+    /* ========== 静音按钮样式 ========== */
+    .mute-button-container {
+      position: fixed;
+      top: clamp(10px, 2vh, 20px);
+      left: clamp(10px, 2vw, 20px);
+      z-index: 1500;
+      pointer-events: auto;
+    }
+
+    .mute-button {
+      width: clamp(36px, 5vw, 44px);
+      height: clamp(36px, 5vw, 44px);
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.2s ease;
+      padding: 0;
+      outline: none;
+    }
+
+    .mute-button:hover,
+    .mute-button.hover {
+      background: rgba(0, 0, 0, 0.8);
+      border-color: rgba(255, 255, 255, 0.8);
+      transform: scale(1.1);
+    }
+
+    .mute-button:active {
+      transform: scale(0.95);
+    }
+
+    .mute-button.muted {
+      background: rgba(255, 50, 50, 0.5);
+      border-color: rgba(255, 100, 100, 0.6);
+    }
+
+    .mute-button.muted:hover,
+    .mute-button.muted.hover {
+      background: rgba(255, 50, 50, 0.7);
+      border-color: rgba(255, 100, 100, 0.8);
+    }
+
+    .mute-icon {
+      width: 60%;
+      height: 60%;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .mute-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  <script type="module" crossorigin src="./assets/index-Dy1Q0gGS.js"></script>
+</head>
+
+<body>
+  <!-- 主菜单 -->
+  <div id="main-menu">
+    <!-- 天空背景 -->
+    <div class="menu-sky"></div>
+
+    <!-- 云朵层 -->
+    <div class="menu-clouds" id="menu-clouds">
+      <!-- 云朵将通过 JS 动态生成 -->
+    </div>
+
+    <!-- 游戏标题 -->
+    <h1 class="menu-title">Deepseek VS GPT</h1>
+
+    <!-- 开始游戏按钮 -->
+    <button class="menu-start-btn" id="start-game-btn">开始游戏</button>
+
+    <!-- 地面 -->
+    <div class="menu-ground"></div>
+  </div>
+
+  <!-- 游戏容器 -->
+  <div id="game-container"></div>
+
+  <!-- 技能选择UI -->
+  <div id="skill-selection-overlay">
+    <div class="skill-selection-title">选择技能</div>
+    <div class="skill-cards-container">
+      <!-- 技能卡片1 -->
+      <div class="skill-card" data-index="0">
+        <div class="skill-icon-bg">
+          <span class="skill-icon">?</span>
+        </div>
+        <div class="skill-card-content">
+          <div class="skill-name">技能名称</div>
+          <div class="skill-description">技能描述</div>
+          <div class="skill-select-hint">点击选择</div>
+        </div>
+      </div>
+      <!-- 技能卡片2 -->
+      <div class="skill-card" data-index="1">
+        <div class="skill-icon-bg">
+          <span class="skill-icon">?</span>
+        </div>
+        <div class="skill-card-content">
+          <div class="skill-name">技能名称</div>
+          <div class="skill-description">技能描述</div>
+          <div class="skill-select-hint">点击选择</div>
+        </div>
+      </div>
+      <!-- 技能卡片3 -->
+      <div class="skill-card" data-index="2">
+        <div class="skill-icon-bg">
+          <span class="skill-icon">?</span>
+        </div>
+        <div class="skill-card-content">
+          <div class="skill-name">技能名称</div>
+          <div class="skill-description">技能描述</div>
+          <div class="skill-select-hint">点击选择</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 游戏结束UI -->
+  <div id="game-over-overlay">
+    <div class="game-over-content">
+      <div class="game-over-title">游戏结束</div>
+      <div class="game-over-stats">
+        <div class="stat-item">
+          <span class="stat-label">最终得分</span>
+          <span class="stat-value score" id="game-over-score">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">达到等级</span>
+          <span class="stat-value level" id="game-over-level">1</span>
+        </div>
+      </div>
+      <button class="game-over-button" id="game-over-restart">
+        <span class="button-text">重新开始</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 移动端横屏提示 -->
+  <div id="rotate-hint">
+    <div class="rotate-icon-container">
+      <div class="rotate-phone"></div>
+      <div class="rotate-arrow"></div>
+    </div>
+    <div class="rotate-text">请旋转设备</div>
+    <div class="rotate-subtext">为了获得最佳游戏体验，请将设备旋转至横屏</div>
+  </div>
+
+  <!-- 主菜单逻辑 -->
+  <script>
+    // 主菜单管理器
+    const MainMenu = {
+      clouds: [],
+      animationId: null,
+      audioContext: null,
+      bgm: null,
+      isAudioStarted: false,
+
+      init() {
+        this.createClouds();
+        this.bindEvents();
+        this.startCloudAnimation();
+        this.initAudio();
+      },
+
+      // 初始化音频系统
+      initAudio() {
+        // 检查是否已静音
+        const isMuted = localStorage.getItem('deepseek_vs_gpt_muted') === 'true';
+
+        // 创建菜单BGM音频对象
+        this.bgm = new Audio('./audio/menu_bgm.mp3');
+        this.bgm.loop = true;
+        this.bgm.volume = isMuted ? 0 : 0.5; // 默认音量50%
+
+        console.log('[MainMenu] 音频初始化完成');
+      },
+
+      // 启动背景音乐
+      startBGM() {
+        if (this.isAudioStarted || !this.bgm) return;
+
+        // 播放菜单BGM
+        this.bgm.play().catch(e => {
+          console.warn('[MainMenu] BGM播放失败:', e);
+        });
+
+        this.isAudioStarted = true;
+        console.log('[MainMenu] 菜单BGM开始播放');
+      },
+
+      // 停止背景音乐（带淡出效果）
+      stopBGM() {
+        if (!this.bgm) return;
+
+        // 淡出效果
+        const fadeOut = setInterval(() => {
+          if (this.bgm.volume > 0.05) {
+            this.bgm.volume -= 0.05;
+          } else {
+            this.bgm.pause();
+            this.bgm.currentTime = 0;
+            clearInterval(fadeOut);
+          }
+        }, 50);
+
+        this.isAudioStarted = false;
+        console.log('[MainMenu] 菜单BGM停止');
+      },
+
+      // 处理首次用户交互（解锁音频）
+      handleFirstInteraction() {
+        this.startBGM();
+        console.log('[MainMenu] 音频已解锁');
+      },
+
+      // 创建云朵
+      createClouds() {
+        const container = document.getElementById('menu-clouds');
+        const cloudCount = Math.max(4, Math.floor(window.innerWidth / 250));
+
+        for (let i = 0; i < cloudCount; i++) {
+          const cloud = document.createElement('div');
+          cloud.className = 'cloud';
+
+          // 随机大小
+          const scale = 0.3 + Math.random() * 0.5;
+          const size = 100 * scale;
+          cloud.style.width = `${size * 2}px`;
+          cloud.style.height = `${size}px`;
+
+          // 随机位置
+          const x = Math.random() * window.innerWidth;
+          const y = 5 + Math.random() * 35; // 5% - 40% 的视口高度
+          cloud.style.left = `${x}px`;
+          cloud.style.top = `${y}%`;
+
+          // 随机动画参数
+          const duration = 20 + Math.random() * 25; // 20-45秒完成一次循环
+          const delay = Math.random() * -duration; // 随机延迟，让云朵分散
+          cloud.style.animation = `cloudFloat ${duration}s linear infinite`;
+          cloud.style.animationDelay = `${delay}s`;
+
+          // 保存云朵数据用于浮动动画
+          const cloudData = {
+            element: cloud,
+            baseY: y,
+            floatOffset: Math.random() * Math.PI * 2,
+            floatSpeed: 0.5 + Math.random() * 0.5
+          };
+
+          container.appendChild(cloud);
+          this.clouds.push(cloudData);
+        }
+      },
+
+      // 云朵上下浮动动画
+      startCloudAnimation() {
+        const animate = (time) => {
+          this.clouds.forEach(cloudData => {
+            const floatY = Math.sin(time * 0.001 * cloudData.floatSpeed + cloudData.floatOffset) * 10;
+            cloudData.element.style.marginTop = `${floatY}px`;
+          });
+          this.animationId = requestAnimationFrame(animate);
+        };
+        this.animationId = requestAnimationFrame(animate);
+      },
+
+      // 绑定事件
+      bindEvents() {
+        const startBtn = document.getElementById('start-game-btn');
+        startBtn.addEventListener('click', () => this.startGame());
+
+        // 窗口大小变化时重新调整
+        window.addEventListener('resize', () => {
+          this.handleResize();
+        });
+
+        // 监听首次用户交互以解锁音频
+        const unlockAudio = () => {
+          this.handleFirstInteraction();
+          document.removeEventListener('click', unlockAudio);
+          document.removeEventListener('touchstart', unlockAudio);
+        };
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+      },
+
+      // 开始游戏
+      startGame() {
+        const mainMenu = document.getElementById('main-menu');
+        const gameContainer = document.getElementById('game-container');
+
+        // 淡出主菜单
+        mainMenu.classList.add('hidden');
+
+        // 停止云朵动画
+        if (this.animationId) {
+          cancelAnimationFrame(this.animationId);
+        }
+
+        // 停止菜单BGM（带淡出效果）
+        this.stopBGM();
+
+        // 显示游戏容器并初始化游戏
+        setTimeout(() => {
+          gameContainer.classList.add('game-active');
+          // 触发自定义事件通知 main.js 初始化游戏
+          window.dispatchEvent(new CustomEvent('startGame'));
+        }, 500);
+      },
+
+      // 处理窗口大小变化
+      handleResize() {
+        // 重新计算云朵位置，确保适应新窗口大小
+        this.clouds.forEach(cloudData => {
+          if (parseFloat(cloudData.element.style.top) > 50) {
+            cloudData.baseY = 5 + Math.random() * 35;
+            cloudData.element.style.top = `${cloudData.baseY}%`;
+          }
+        });
+      }
+    };
+
+    // DOM 加载完成后初始化主菜单
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => MainMenu.init());
+    } else {
+      MainMenu.init();
+    }
+
+    // 导出供其他模块使用
+    window.MainMenu = MainMenu;
+  </script>
+
+  <script>
+    // 全局设备检测工具（供内联脚本使用）
+    window.DeviceDetector = {
+      isMobile: function () {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const mobileKeywords = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i;
+        const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const isSmallScreen = window.innerWidth < 1024;
+        return mobileKeywords.test(userAgent) || (hasTouch && isSmallScreen);
+      },
+      isLandscape: function () {
+        if (screen.orientation && screen.orientation.type) {
+          return screen.orientation.type.includes('landscape');
+        }
+        return window.innerWidth > window.innerHeight;
+      }
+    };
+
+    // 移动端横屏适配脚本
+    (function () {
+      'use strict';
+
+      // 检测是否为移动设备
+      function isMobileDevice() {
+        return window.DeviceDetector.isMobile();
+      }
+
+      // 检测是否为横屏
+      function isLandscape() {
+        return window.DeviceDetector.isLandscape();
+      }
+
+      // 更新旋转提示显示状态
+      function updateRotateHint() {
+        const rotateHint = document.getElementById('rotate-hint');
+        const gameContainer = document.getElementById('game-container');
+
+        if (!rotateHint) return;
+
+        // 只在移动设备上处理
+        if (!isMobileDevice()) {
+          rotateHint.classList.remove('visible');
+          if (gameContainer) gameContainer.style.display = 'flex';
+          return;
+        }
+
+        if (isLandscape()) {
+          // 横屏状态：隐藏提示，显示游戏，请求全屏
+          rotateHint.classList.remove('visible');
+          if (gameContainer) gameContainer.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+
+          // 请求全屏（如果还没有全屏）
+          if (!isFullscreen()) {
+            console.log('[Mobile] 检测到横屏，尝试进入全屏');
+            enterFullscreen().catch(err => {
+              console.log('[Mobile] 无法进入全屏:', err.message);
+            });
+          }
+        } else {
+          // 竖屏状态：显示旋转提示，隐藏游戏，退出全屏
+          rotateHint.classList.add('visible');
+          if (gameContainer) gameContainer.style.display = 'none';
+          document.body.style.overflow = 'hidden';
+
+          // 退出全屏（如果当前是全屏状态）
+          if (isFullscreen()) {
+            console.log('[Mobile] 检测到竖屏，退出全屏');
+            exitFullscreen().catch(err => {
+              console.log('[Mobile] 无法退出全屏:', err.message);
+            });
+          }
+        }
+      }
+
+      // 检测是否为 iOS 设备
+      function isIOS() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        return /iphone|ipad|ipod/.test(userAgent);
+      }
+
+      // 进入全屏模式
+      async function enterFullscreen() {
+        // iOS 不支持标准 Fullscreen API，使用替代方案
+        if (isIOS()) {
+          enterIOSFullscreen();
+          return;
+        }
+
+        const element = document.documentElement;
+
+        try {
+          if (element.requestFullscreen) {
+            await element.requestFullscreen();
+            console.log('[Mobile] 已进入全屏模式');
+          } else if (element.webkitRequestFullscreen) {
+            await element.webkitRequestFullscreen();
+            console.log('[Mobile] 已进入全屏模式 (webkit)');
+          } else if (element.msRequestFullscreen) {
+            await element.msRequestFullscreen();
+            console.log('[Mobile] 已进入全屏模式 (ms)');
+          }
+        } catch (err) {
+          console.log('[Mobile] 无法进入全屏:', err.message);
+        }
+      }
+
+      // 退出全屏
+      async function exitFullscreen() {
+        // iOS 不支持标准 Fullscreen API
+        if (isIOS()) {
+          exitIOSFullscreen();
+          return;
+        }
+
+        try {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen();
+            console.log('[Mobile] 已退出全屏模式');
+          } else if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen();
+            console.log('[Mobile] 已退出全屏模式 (webkit)');
+          } else if (document.msExitFullscreen) {
+            await document.msExitFullscreen();
+            console.log('[Mobile] 已退出全屏模式 (ms)');
+          }
+        } catch (err) {
+          console.log('[Mobile] 无法退出全屏:', err.message);
+        }
+      }
+
+      // iOS 全屏模拟（因为 iOS Safari 不支持标准 Fullscreen API）
+      function enterIOSFullscreen() {
+        console.log('[Mobile] 进入 iOS 全屏模拟模式');
+
+        // 添加 iOS 特定 CSS 类
+        document.documentElement.classList.add('ios-standalone');
+        document.body.classList.add('ios-standalone');
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+          gameContainer.classList.add('ios-standalone');
+        }
+
+        // 隐藏 Safari 工具栏（通过滚动）
+        setTimeout(() => {
+          window.scrollTo(0, 1);
+        }, 100);
+
+        // 更新 viewport 以优化显示
+        const viewport = document.querySelector('meta[name=viewport]');
+        if (viewport) {
+          viewport.setAttribute('content',
+            'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+        }
+
+        console.log('[Mobile] iOS 全屏模拟已启用');
+      }
+
+      // 退出 iOS 全屏模拟
+      function exitIOSFullscreen() {
+        console.log('[Mobile] 退出 iOS 全屏模拟模式');
+
+        // 移除 iOS 特定 CSS 类
+        document.documentElement.classList.remove('ios-standalone');
+        document.body.classList.remove('ios-standalone');
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+          gameContainer.classList.remove('ios-standalone');
+        }
+      }
+
+      // 检查是否处于全屏状态
+      function isFullscreen() {
+        return !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement ||
+          document.documentElement.classList.contains('ios-standalone')
+        );
+      }
+
+      // 尝试锁定屏幕方向为横屏（需要全屏权限）
+      async function lockOrientation() {
+        if (screen.orientation && screen.orientation.lock) {
+          try {
+            await screen.orientation.lock('landscape');
+            console.log('[Mobile] 屏幕方向已锁定为横屏');
+          } catch (err) {
+            // 锁定失败（可能是权限问题或浏览器不支持）
+            console.log('[Mobile] 无法锁定屏幕方向:', err.message);
+          }
+        }
+      }
+
+      // 初始化
+      function init() {
+        if (!isMobileDevice()) {
+          console.log('[Mobile] 非移动设备，跳过横屏适配');
+          return;
+        }
+
+        console.log('[Mobile] 检测到移动设备，启用横屏适配');
+
+        // 初始检查
+        updateRotateHint();
+
+        // 监听屏幕方向变化
+        if (screen.orientation) {
+          screen.orientation.addEventListener('change', function () {
+            console.log('[Mobile] 屏幕方向变化:', screen.orientation.type);
+            updateRotateHint();
+          });
+        }
+
+        // 监听窗口大小变化（备用）
+        window.addEventListener('resize', function () {
+          // 使用防抖避免频繁触发
+          clearTimeout(window._resizeTimeout);
+          window._resizeTimeout = setTimeout(updateRotateHint, 100);
+        });
+
+        // 监听设备方向变化（iOS 备用方案）
+        window.addEventListener('orientationchange', function () {
+          console.log('[Mobile] orientationchange 事件触发');
+          setTimeout(updateRotateHint, 100);
+        });
+
+        // 尝试锁定方向
+        lockOrientation();
+
+        // 用户首次交互时再次尝试锁定和全屏（某些浏览器需要用户交互）
+        document.addEventListener('click', function onFirstInteraction() {
+          lockOrientation();
+          // 如果是横屏且未全屏，尝试进入全屏
+          if (isLandscape() && !isFullscreen()) {
+            enterFullscreen().catch(err => {
+              console.log('[Mobile] 首次交互时无法进入全屏:', err.message);
+            });
+          }
+          document.removeEventListener('click', onFirstInteraction);
+        }, { once: true });
+
+        // 监听全屏状态变化
+        function handleFullscreenChange() {
+          const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+          console.log('[Mobile] 全屏状态变化:', isFS ? '进入全屏' : '退出全屏');
+
+          // 如果退出全屏但仍然是横屏，可以显示一个提示引导用户重新进入全屏
+          if (!isFS && isLandscape() && isMobileDevice() && !isIOS()) {
+            console.log('[Mobile] 用户退出全屏，但仍是横屏状态');
+            // 可选：显示一个提示按钮让用户重新进入全屏
+          }
+        }
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+      }
+
+      // DOM 加载完成后初始化
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+      // 导出全局函数供其他模块使用
+      window.MobileOrientation = {
+        isMobileDevice: isMobileDevice,
+        isLandscape: isLandscape,
+        isFullscreen: isFullscreen,
+        updateRotateHint: updateRotateHint,
+        enterFullscreen: enterFullscreen,
+        exitFullscreen: exitFullscreen,
+        isIOS: isIOS
+      };
+    })();
+  </script>
+</body>
+
+</html>
