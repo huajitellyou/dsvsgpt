@@ -1,0 +1,125 @@
+/* ========== 全局字体配置 ========== */
+
+/* 定义自定义字体 - font.ttf 作为全局字体 */
+@font-face {
+  font-family: 'GameFont';
+  src: url('./font.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 定义字体变体 - 粗体 */
+@font-face {
+  font-family: 'GameFont';
+  src: url('./font.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* CSS 变量定义 - 方便全局使用 */
+:root {
+  /* 主字体 - 优先使用自定义字体，后备使用系统字体 */
+  --font-primary: 'GameFont', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC', sans-serif;
+  
+  /* 备用字体栈（当自定义字体加载失败时使用） */
+  --font-fallback: 'Arial', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  
+  /* 标题字体 */
+  --font-title: 'GameFont', 'Arial Black', 'Microsoft YaHei', sans-serif;
+  
+  /* 正文字体 */
+  --font-body: 'GameFont', 'Arial', 'Microsoft YaHei', sans-serif;
+}
+
+/* 全局字体应用 */
+html, body {
+  font-family: var(--font-primary);
+}
+
+/* 游戏UI容器字体 */
+#game-ui-container {
+  font-family: var(--font-primary);
+}
+
+/* 主菜单字体 */
+#main-menu {
+  font-family: var(--font-primary);
+}
+
+.menu-title {
+  font-family: var(--font-title);
+}
+
+.menu-start-btn {
+  font-family: var(--font-primary);
+}
+
+/* 技能选择UI字体 */
+#skill-selection-overlay {
+  font-family: var(--font-primary);
+}
+
+.skill-selection-title {
+  font-family: var(--font-title);
+}
+
+.skill-name {
+  font-family: var(--font-primary);
+}
+
+.skill-description {
+  font-family: var(--font-body);
+}
+
+.skill-select-hint {
+  font-family: var(--font-primary);
+}
+
+/* 游戏结束UI字体 */
+#game-over-overlay {
+  font-family: var(--font-primary);
+}
+
+.game-over-title {
+  font-family: var(--font-title);
+}
+
+.stat-label {
+  font-family: var(--font-body);
+}
+
+.stat-value {
+  font-family: var(--font-title);
+}
+
+.button-text {
+  font-family: var(--font-primary);
+}
+
+/* 横屏提示字体 */
+#rotate-hint {
+  font-family: var(--font-primary);
+}
+
+.rotate-text {
+  font-family: var(--font-title);
+}
+
+.rotate-subtext {
+  font-family: var(--font-body);
+}
+
+/* 血条和状态UI字体 */
+.ui-health-label,
+.ui-health-text,
+.ui-info-item,
+.ui-instructions {
+  font-family: var(--font-primary);
+}
+
+/* 静音按钮 */
+.mute-button-container {
+  font-family: var(--font-primary);
+}
